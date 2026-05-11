@@ -2,16 +2,16 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Routes</title>
+    <title>Locations</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 <div class="container-fluid mt-4 px-5">
-    <h1 class="mb-4 text-center">Routes</h1>
-    <div th:replace="~{fragments/nav :: nav ('routes')}"></div>
+    <h1 class="mb-4 text-center">Locations</h1>
+    <div th:replace="~{fragments/nav :: nav ('locations')}"></div>
     <div class="d-flex justify-content-end mb-3">
-        <a th:href="@{/routes/add}" class="btn btn-success">Add route</a>
+        <a th:href="@{/locations/add}" class="btn btn-success">Add location</a>
     </div>
     <div class="card shadow-sm">
         <div class="card-body p-4">
@@ -20,25 +20,23 @@
                 <tr>
                     <th style="width:80px;">ID</th>
                     <th>Name</th>
-                    <th>Start location</th>
                     <th>Description</th>
                     <th class="text-end pe-4" style="width:220px;">Actions</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="r : ${routes}">
-                    <td th:text="${r.id}"></td>
-                    <td th:text="${r.name}"></td>
-                    <td th:text="${r.startLocation != null ? r.startLocation.name : '—'}"></td>
-                    <td th:text="${r.description}"></td>
+                <tr th:each="loc : ${locations}">
+                    <td th:text="${loc.id}"></td>
+                    <td th:text="${loc.name}"></td>
+                    <td th:text="${loc.description}"></td>
                     <td class="actions d-flex justify-content-end gap-2 pe-4">
-                        <a th:href="@{/routes/edit/{id}(id=${r.id})}" class="btn btn-warning btn-sm">Edit</a>
-                        <a th:href="@{/routes/delete/{id}(id=${r.id})}" class="btn btn-danger btn-sm"
-                           onclick="return confirm('Delete this route?')">Delete</a>
+                        <a th:href="@{/locations/edit/{id}(id=${loc.id})}" class="btn btn-warning btn-sm">Edit</a>
+                        <a th:href="@{/locations/delete/{id}(id=${loc.id})}" class="btn btn-danger btn-sm"
+                           onclick="return confirm('Delete this location? Routes using it will clear start location.')">Delete</a>
                     </td>
                 </tr>
-                <tr th:if="${#lists.isEmpty(routes)}">
-                    <td colspan="5" class="text-center text-muted">No routes yet.</td>
+                <tr th:if="${#lists.isEmpty(locations)}">
+                    <td colspan="4" class="text-center text-muted">No locations yet.</td>
                 </tr>
                 </tbody>
             </table>

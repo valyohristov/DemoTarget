@@ -1,6 +1,7 @@
 package com.example.target.service;
 
 import com.example.target.model.Route;
+import com.example.target.repository.LocationRepository;
 import com.example.target.repository.RouteRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -12,9 +13,11 @@ import java.util.Optional;
 public class RouteService {
 
     private final RouteRepository routeRepository;
+    private final LocationRepository locationRepository;
 
-    public RouteService(RouteRepository routeRepository) {
+    public RouteService(RouteRepository routeRepository, LocationRepository locationRepository) {
         this.routeRepository = routeRepository;
+        this.locationRepository = locationRepository;
     }
 
     public List<Route> getAll() {
@@ -25,8 +28,17 @@ public class RouteService {
         return routeRepository.findById(id);
     }
 
-    public Route save(Route route) {
+    public Route save(Route route, Long startLocationId) {
+        applyStartLocation(route, startLocationId);
         return routeRepository.save(route);
+    }
+
+    private void applyStartLocation(Route route, Long startLocationId) {
+        if (startLocationId != null) {
+            route.setStartLocation(locationRepository.getReferenceById(startLocationId));
+        } else {
+            route.setStartLocation(null);
+        }
     }
 
     public void delete(Long id) {

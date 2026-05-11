@@ -9,6 +9,8 @@
            th:classappend="${active == 'persons'} ? 'active' : _">Persons</a>
         <a th:href="@{/routes}" class="btn btn-outline-primary"
            th:classappend="${active == 'routes'} ? 'active' : _">Routes</a>
+        <a th:href="@{/locations}" class="btn btn-outline-primary"
+           th:classappend="${active == 'locations'} ? 'active' : _">Locations</a>
         <a th:href="@{/vehicles}" class="btn btn-outline-primary"
            th:classappend="${active == 'vehicles'} ? 'active' : _">Vehicles</a>
     </div>

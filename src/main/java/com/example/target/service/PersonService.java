@@ -1,46 +1,34 @@
 package com.example.target.service;
 
 import com.example.target.model.AccessLevel;
+import com.example.target.model.ObjectType;
 import com.example.target.model.Person;
-import com.example.target.model.PersonRouteAccess;
-import com.example.target.model.PersonVehicleAccess;
-import com.example.target.model.Route;
-import com.example.target.model.Vehicle;
+import com.example.target.model.PersonObjectTypeAccess;
+import com.example.target.repository.PersonObjectTypeAccessRepository;
 import com.example.target.repository.PersonRepository;
-import com.example.target.repository.PersonRouteAccessRepository;
-import com.example.target.repository.PersonVehicleAccessRepository;
-import com.example.target.repository.RouteRepository;
-import com.example.target.repository.VehicleRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 public class PersonService {
 
     private final PersonRepository personRepository;
-    private final PersonRouteAccessRepository personRouteAccessRepository;
-    private final PersonVehicleAccessRepository personVehicleAccessRepository;
-    private final RouteRepository routeRepository;
-    private final VehicleRepository vehicleRepository;
+    private final PersonObjectTypeAccessRepository personObjectTypeAccessRepository;
 
     public PersonService(PersonRepository personRepository,
-                         PersonRouteAccessRepository personRouteAccessRepository,
-                         PersonVehicleAccessRepository personVehicleAccessRepository,
-                         RouteRepository routeRepository,
-                         VehicleRepository vehicleRepository) {
+                         PersonObjectTypeAccessRepository personObjectTypeAccessRepository) {
         this.personRepository = personRepository;
-        this.personRouteAccessRepository = personRouteAccessRepository;
-        this.personVehicleAccessRepository = personVehicleAccessRepository;
-        this.routeRepository = routeRepository;
-        this.vehicleRepository = vehicleRepository;
+        this.personObjectTypeAccessRepository = personObjectTypeAccessRepository;
     }
 
     public List<Person> getAll() {
@@ -59,46 +47,50 @@ public class PersonService {
         personRepository.deleteById(id);
     }
 
-    public Map<Long, AccessLevel> getRouteAccessByPersonId(Long personId) {
-        return personRouteAccessRepository.findByPerson_Id(personId).stream()
-                .collect(Collectors.toMap(pra -> pra.getRoute().getId(), PersonRouteAccess::getAccessLevel));
-    }
-
-    public Map<Long, AccessLevel> getVehicleAccessByPersonId(Long personId) {
-        return personVehicleAccessRepository.findByPerson_Id(personId).stream()
-                .collect(Collectors.toMap(pva -> pva.getVehicle().getId(), PersonVehicleAccess::getAccessLevel));
+    /**
+     * Access levels granted for a person on an object type (applies to all instances of that type).
+     */
+    public Set<AccessLevel> getAccessLevelsForType(Long personId, ObjectType objectType) {
+        if (personId == null) {
+            return Collections.emptySet();
+        }
+        return personObjectTypeAccessRepository.findByPerson_Id(personId).stream()
+                .filter(row -> row.getObjectType() == objectType)
+                .map(PersonObjectTypeAccess::getAccessLevel)
+                .collect(Collectors.toCollection(HashSet::new));
     }
 
     @Transactional
-    public void replaceAccess(Long personId, Map<Long, AccessLevel> routeAccess, Map<Long, AccessLevel> vehicleAccess) {
-        personRouteAccessRepository.deleteByPerson_Id(personId);
+    public void replaceTypeAccess(Long personId, Map<ObjectType, Set<AccessLevel>> accessByType) {
+        personObjectTypeAccessRepository.deleteByPerson_Id(personId);
         Person personRef = personRepository.getReferenceById(personId);
-        for (Map.Entry<Long, AccessLevel> e : routeAccess.entrySet()) {
-            Route routeRef = routeRepository.getReferenceById(e.getKey());
-            personRouteAccessRepository.save(new PersonRouteAccess(personRef, routeRef, e.getValue()));
-        }
-
-        personVehicleAccessRepository.deleteByPerson_Id(personId);
-        for (Map.Entry<Long, AccessLevel> e : vehicleAccess.entrySet()) {
-            Vehicle vehicleRef = vehicleRepository.getReferenceById(e.getKey());
-            personVehicleAccessRepository.save(new PersonVehicleAccess(personRef, vehicleRef, e.getValue()));
+        for (Map.Entry<ObjectType, Set<AccessLevel>> e : accessByType.entrySet()) {
+            if (e.getValue() == null) {
+                continue;
+            }
+            for (AccessLevel level : new HashSet<>(e.getValue())) {
+                personObjectTypeAccessRepository.save(
+                        new PersonObjectTypeAccess(personRef, e.getKey(), level));
+            }
         }
     }
 
-    /**
-     * Safe for Thymeleaf when person id is null (add form): returns empty map.
-     */
-    public Map<Long, AccessLevel> routeAccessMapForForm(Long personId) {
+    public Map<ObjectType, Set<AccessLevel>> typeAccessForForm(Long personId) {
         if (personId == null) {
-            return Collections.emptyMap();
+            return emptyTypeAccessMap();
         }
-        return new HashMap<>(getRouteAccessByPersonId(personId));
+        Map<ObjectType, Set<AccessLevel>> out = emptyTypeAccessMap();
+        for (PersonObjectTypeAccess row : personObjectTypeAccessRepository.findByPerson_Id(personId)) {
+            out.get(row.getObjectType()).add(row.getAccessLevel());
+        }
+        return out;
     }
 
-    public Map<Long, AccessLevel> vehicleAccessMapForForm(Long personId) {
-        if (personId == null) {
-            return Collections.emptyMap();
+    private static Map<ObjectType, Set<AccessLevel>> emptyTypeAccessMap() {
+        Map<ObjectType, Set<AccessLevel>> m = new EnumMap<>(ObjectType.class);
+        for (ObjectType t : ObjectType.values()) {
+            m.put(t, new HashSet<>());
         }
-        return new HashMap<>(getVehicleAccessByPersonId(personId));
+        return m;
     }
 }

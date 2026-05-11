@@ -3,25 +3,21 @@ package com.example.target.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "routes")
-public class Route {
+@Table(name = "locations")
+public class Location {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String name;
 
     @Column(length = 1000)
     private String description;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "start_location_id")
-    private Location startLocation;
+    public Location() {}
 
-    public Route() {}
-
-    public Route(String name, String description) {
+    public Location(String name, String description) {
         this.name = name;
         this.description = description;
     }
@@ -34,7 +30,4 @@ public class Route {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
-
-    public Location getStartLocation() { return startLocation; }
-    public void setStartLocation(Location startLocation) { this.startLocation = startLocation; }
 }

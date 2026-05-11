@@ -19,7 +19,8 @@
                     <label class="form-label" for="routeId">Route</label>
                     <select class="form-select" id="routeId" th:field="*{routeId}" required>
                         <option value="" disabled th:selected="*{routeId} == null">Select route…</option>
-                        <option th:each="r : ${routes}" th:value="${r.id}" th:text="${r.name}"></option>
+                        <option th:each="r : ${routes}" th:value="${r.id}"
+                                th:text="${r.name + (r.startLocation != null ? ' (' + r.startLocation.name + ')' : '')}"></option>
                     </select>
                 </div>
                 <div class="col-md-4">

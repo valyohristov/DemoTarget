@@ -1,6 +1,7 @@
 package com.example.target.controller;
 
 import com.example.target.model.Route;
+import com.example.target.service.LocationService;
 import com.example.target.service.RouteService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,9 +14,11 @@ import java.util.Optional;
 public class RouteController {
 
     private final RouteService routeService;
+    private final LocationService locationService;
 
-    public RouteController(RouteService routeService) {
+    public RouteController(RouteService routeService, LocationService locationService) {
         this.routeService = routeService;
+        this.locationService = locationService;
     }
 
     @GetMapping
@@ -27,13 +30,15 @@ public class RouteController {
     @GetMapping("/add")
     public String showAddForm(Model model) {
         model.addAttribute("route", new Route());
+        model.addAttribute("locations", locationService.getAll());
         model.addAttribute("mode", "add");
         return "routes/form";
     }
 
     @PostMapping("/add")
-    public String add(@ModelAttribute Route route) {
-        routeService.save(route);
+    public String add(@ModelAttribute Route route,
+                      @RequestParam(value = "startLocationId", required = false) String startLocationId) {
+        routeService.save(route, parseLocationId(startLocationId));
         return "redirect:/routes";
     }
 
@@ -44,15 +49,25 @@ public class RouteController {
             return "redirect:/routes";
         }
         model.addAttribute("route", route.get());
+        model.addAttribute("locations", locationService.getAll());
         model.addAttribute("mode", "edit");
         return "routes/form";
     }
 
     @PostMapping("/edit/{id}")
-    public String update(@PathVariable Long id, @ModelAttribute Route route) {
+    public String update(@PathVariable Long id,
+                         @ModelAttribute Route route,
+                         @RequestParam(value = "startLocationId", required = false) String startLocationId) {
         route.setId(id);
-        routeService.save(route);
+        routeService.save(route, parseLocationId(startLocationId));
         return "redirect:/routes";
+    }
+
+    private static Long parseLocationId(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        return Long.parseLong(raw.trim());
     }
 
     @GetMapping("/delete/{id}")

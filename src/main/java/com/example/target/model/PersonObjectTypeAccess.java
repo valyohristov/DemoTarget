@@ -3,9 +3,12 @@ package com.example.target.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "person_vehicle_access",
-        uniqueConstraints = @UniqueConstraint(name = "uq_person_vehicle", columnNames = {"person_id", "vehicle_id"}))
-public class PersonVehicleAccess {
+@Table(name = "person_object_type_access",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uq_person_type_level",
+                columnNames = {"person_id", "object_type", "access_level"}))
+public class PersonObjectTypeAccess {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -14,19 +17,19 @@ public class PersonVehicleAccess {
     @JoinColumn(name = "person_id", nullable = false)
     private Person person;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "vehicle_id", nullable = false)
-    private Vehicle vehicle;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "object_type", nullable = false, length = 20)
+    private ObjectType objectType;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "access_level", nullable = false, length = 20)
     private AccessLevel accessLevel;
 
-    public PersonVehicleAccess() {}
+    public PersonObjectTypeAccess() {}
 
-    public PersonVehicleAccess(Person person, Vehicle vehicle, AccessLevel accessLevel) {
+    public PersonObjectTypeAccess(Person person, ObjectType objectType, AccessLevel accessLevel) {
         this.person = person;
-        this.vehicle = vehicle;
+        this.objectType = objectType;
         this.accessLevel = accessLevel;
     }
 
@@ -36,8 +39,8 @@ public class PersonVehicleAccess {
     public Person getPerson() { return person; }
     public void setPerson(Person person) { this.person = person; }
 
-    public Vehicle getVehicle() { return vehicle; }
-    public void setVehicle(Vehicle vehicle) { this.vehicle = vehicle; }
+    public ObjectType getObjectType() { return objectType; }
+    public void setObjectType(ObjectType objectType) { this.objectType = objectType; }
 
     public AccessLevel getAccessLevel() { return accessLevel; }
     public void setAccessLevel(AccessLevel accessLevel) { this.accessLevel = accessLevel; }

@@ -1,35 +1,28 @@
 package com.example.target.controller;
 
 import com.example.target.model.AccessLevel;
+import com.example.target.model.ObjectType;
 import com.example.target.model.Person;
-import com.example.target.model.Route;
-import com.example.target.model.Vehicle;
 import com.example.target.service.PersonService;
-import com.example.target.service.RouteService;
-import com.example.target.service.VehicleService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
+import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @Controller
 @RequestMapping("/persons")
 public class PersonController {
 
     private final PersonService personService;
-    private final RouteService routeService;
-    private final VehicleService vehicleService;
 
-    public PersonController(PersonService personService,
-                            RouteService routeService,
-                            VehicleService vehicleService) {
+    public PersonController(PersonService personService) {
         this.personService = personService;
-        this.routeService = routeService;
-        this.vehicleService = vehicleService;
     }
 
     @GetMapping
@@ -49,7 +42,7 @@ public class PersonController {
     @PostMapping("/add")
     public String add(@ModelAttribute Person person, HttpServletRequest request) {
         Person saved = personService.save(person);
-        personService.replaceAccess(saved.getId(), parseRouteAccess(request), parseVehicleAccess(request));
+        personService.replaceTypeAccess(saved.getId(), parseTypeAccess(request));
         return "redirect:/persons";
     }
 
@@ -69,7 +62,7 @@ public class PersonController {
     public String update(@PathVariable Long id, @ModelAttribute Person person, HttpServletRequest request) {
         person.setId(id);
         personService.save(person);
-        personService.replaceAccess(id, parseRouteAccess(request), parseVehicleAccess(request));
+        personService.replaceTypeAccess(id, parseTypeAccess(request));
         return "redirect:/persons";
     }
 
@@ -80,32 +73,30 @@ public class PersonController {
     }
 
     private void addAccessFormModel(Model model, Long personId) {
-        model.addAttribute("routes", routeService.getAll());
-        model.addAttribute("vehicles", vehicleService.getAll());
         model.addAttribute("accessLevels", AccessLevel.values());
-        model.addAttribute("routeAccess", personService.routeAccessMapForForm(personId));
-        model.addAttribute("vehicleAccess", personService.vehicleAccessMapForForm(personId));
+        Map<ObjectType, Set<AccessLevel>> typeAccess = personService.typeAccessForForm(personId);
+        model.addAttribute("routeTypeAccess", typeAccess.get(ObjectType.ROUTE));
+        model.addAttribute("vehicleTypeAccess", typeAccess.get(ObjectType.VEHICLE));
     }
 
-    private Map<Long, AccessLevel> parseRouteAccess(HttpServletRequest request) {
-        Map<Long, AccessLevel> out = new HashMap<>();
-        for (Route r : routeService.getAll()) {
-            String raw = request.getParameter("routeAccess_" + r.getId());
-            if (raw != null && !raw.isBlank() && !"NONE".equalsIgnoreCase(raw.trim())) {
-                out.put(r.getId(), AccessLevel.valueOf(raw.trim().toUpperCase()));
-            }
-        }
+    private Map<ObjectType, Set<AccessLevel>> parseTypeAccess(HttpServletRequest request) {
+        Map<ObjectType, Set<AccessLevel>> out = new EnumMap<>(ObjectType.class);
+        out.put(ObjectType.ROUTE, parseLevelSet(request, "routeTypeAccess"));
+        out.put(ObjectType.VEHICLE, parseLevelSet(request, "vehicleTypeAccess"));
         return out;
     }
 
-    private Map<Long, AccessLevel> parseVehicleAccess(HttpServletRequest request) {
-        Map<Long, AccessLevel> out = new HashMap<>();
-        for (Vehicle v : vehicleService.getAll()) {
-            String raw = request.getParameter("vehicleAccess_" + v.getId());
-            if (raw != null && !raw.isBlank() && !"NONE".equalsIgnoreCase(raw.trim())) {
-                out.put(v.getId(), AccessLevel.valueOf(raw.trim().toUpperCase()));
+    private static Set<AccessLevel> parseLevelSet(HttpServletRequest request, String param) {
+        String[] raw = request.getParameterValues(param);
+        if (raw == null || raw.length == 0) {
+            return EnumSet.noneOf(AccessLevel.class);
+        }
+        Set<AccessLevel> set = EnumSet.noneOf(AccessLevel.class);
+        for (String r : raw) {
+            if (r != null && !r.isBlank()) {
+                set.add(AccessLevel.valueOf(r.trim().toUpperCase()));
             }
         }
-        return out;
+        return set;
     }
 }

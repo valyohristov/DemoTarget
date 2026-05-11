@@ -29,7 +29,11 @@
                 <tbody>
                 <tr th:each="row : ${rows}">
                     <td th:text="${row.id}"></td>
-                    <td th:text="${row.route.name}"></td>
+                    <td>
+                        <span th:text="${row.route.name}">Route</span>
+                        <span th:if="${row.route.startLocation != null}" class="text-muted small"
+                              th:text="${' · from ' + row.route.startLocation.name}"></span>
+                    </td>
                     <td th:text="${row.person.fullName + ' (' + row.person.email + ')'}"></td>
                     <td th:text="${row.vehicle.identifier}"></td>
                     <td class="actions d-flex justify-content-end gap-2 pe-4">
