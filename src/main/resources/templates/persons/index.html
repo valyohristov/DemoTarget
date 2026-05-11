@@ -21,6 +21,7 @@
                     <th style="width:80px;">ID</th>
                     <th>Name</th>
                     <th>Email</th>
+                    <th>Home location</th>
                     <th class="text-end pe-4" style="width:200px;">Actions</th>
                 </tr>
                 </thead>
@@ -29,6 +30,7 @@
                     <td th:text="${p.id}"></td>
                     <td th:text="${p.fullName}"></td>
                     <td th:text="${p.email}"></td>
+                    <td th:text="${p.location != null ? p.location.name : '— (all routes)'}"></td>
                     <td class="actions d-flex justify-content-end gap-2 pe-4">
                         <a th:href="@{/persons/edit/{id}(id=${p.id})}" class="btn btn-warning btn-sm">Edit</a>
                         <a th:href="@{/persons/delete/{id}(id=${p.id})}" class="btn btn-danger btn-sm"
@@ -36,7 +38,7 @@
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(persons)}">
-                    <td colspan="4" class="text-center text-muted">No persons yet.</td>
+                    <td colspan="5" class="text-center text-muted">No persons yet.</td>
                 </tr>
                 </tbody>
             </table>

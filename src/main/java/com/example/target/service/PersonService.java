@@ -4,9 +4,11 @@ import com.example.target.model.AccessLevel;
 import com.example.target.model.ObjectType;
 import com.example.target.model.Person;
 import com.example.target.model.PersonObjectTypeAccess;
+import com.example.target.repository.LocationRepository;
 import com.example.target.repository.PersonObjectTypeAccessRepository;
 import com.example.target.repository.PersonRepository;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,11 +26,17 @@ public class PersonService {
 
     private final PersonRepository personRepository;
     private final PersonObjectTypeAccessRepository personObjectTypeAccessRepository;
+    private final LocationRepository locationRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public PersonService(PersonRepository personRepository,
-                         PersonObjectTypeAccessRepository personObjectTypeAccessRepository) {
+                         PersonObjectTypeAccessRepository personObjectTypeAccessRepository,
+                         LocationRepository locationRepository,
+                         PasswordEncoder passwordEncoder) {
         this.personRepository = personRepository;
         this.personObjectTypeAccessRepository = personObjectTypeAccessRepository;
+        this.locationRepository = locationRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<Person> getAll() {
@@ -39,17 +47,44 @@ public class PersonService {
         return personRepository.findById(id);
     }
 
-    public Person save(Person person) {
+    @Transactional
+    public Person saveNew(Person person, String plainPassword, Long locationId) {
+        person.setEmail(normalizeEmail(person.getEmail()));
+        person.setPasswordHash(passwordEncoder.encode(plainPassword));
+        applyLocation(person, locationId);
         return personRepository.save(person);
+    }
+
+    @Transactional
+    public Person updateExisting(Person incoming, String newPasswordOptional, Long locationId) {
+        Person existing = personRepository.findById(incoming.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Person not found: " + incoming.getId()));
+        existing.setFirstName(incoming.getFirstName());
+        existing.setLastName(incoming.getLastName());
+        existing.setEmail(normalizeEmail(incoming.getEmail()));
+        if (newPasswordOptional != null && !newPasswordOptional.isBlank()) {
+            existing.setPasswordHash(passwordEncoder.encode(newPasswordOptional));
+        }
+        applyLocation(existing, locationId);
+        return personRepository.save(existing);
+    }
+
+    private static String normalizeEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase();
+    }
+
+    private void applyLocation(Person person, Long locationId) {
+        if (locationId != null) {
+            person.setLocation(locationRepository.getReferenceById(locationId));
+        } else {
+            person.setLocation(null);
+        }
     }
 
     public void delete(Long id) {
         personRepository.deleteById(id);
     }
 
-    /**
-     * Access levels granted for a person on an object type (applies to all instances of that type).
-     */
     public Set<AccessLevel> getAccessLevelsForType(Long personId, ObjectType objectType) {
         if (personId == null) {
             return Collections.emptySet();

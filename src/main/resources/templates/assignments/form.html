@@ -14,6 +14,7 @@
     <form th:action="${mode == 'add'} ? @{/assignments/add} : @{/assignments/edit/{id}(id=${form.id})}"
           th:object="${form}" method="post" class="card shadow-sm mt-3">
         <div class="card-body p-4">
+            <div th:replace="~{fragments/csrf :: csrfInput}"></div>
             <div class="row mb-3">
                 <div class="col-md-4">
                     <label class="form-label" for="routeId">Route</label>

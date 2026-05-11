@@ -13,6 +13,7 @@
     <form th:action="${mode == 'add'} ? @{/routes/add} : @{/routes/edit/{id}(id=${route.id})}"
           th:object="${route}" method="post" class="card shadow-sm mt-3">
         <div class="card-body p-4">
+            <div th:replace="~{fragments/csrf :: csrfInput}"></div>
             <div class="mb-3">
                 <label class="form-label" for="name">Name</label>
                 <input class="form-control" id="name" th:field="*{name}" required>

@@ -1,5 +1,6 @@
 package com.example.target.service;
 
+import com.example.target.model.Person;
 import com.example.target.model.Route;
 import com.example.target.repository.LocationRepository;
 import com.example.target.repository.RouteRepository;
@@ -18,6 +19,18 @@ public class RouteService {
     public RouteService(RouteRepository routeRepository, LocationRepository locationRepository) {
         this.routeRepository = routeRepository;
         this.locationRepository = locationRepository;
+    }
+
+    /**
+     * Back-office: no home location → all routes. Otherwise routes starting at that location only.
+     */
+    public List<Route> getRoutesVisibleTo(Person viewer) {
+        if (viewer.getLocation() == null) {
+            return routeRepository.findAll(Sort.by(Sort.Direction.ASC, "name"));
+        }
+        return routeRepository.findByStartLocation_Id(
+                viewer.getLocation().getId(),
+                Sort.by(Sort.Direction.ASC, "name"));
     }
 
     public List<Route> getAll() {

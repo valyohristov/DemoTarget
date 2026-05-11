@@ -13,6 +13,7 @@
     <form th:action="${mode == 'add'} ? @{/vehicles/add} : @{/vehicles/edit/{id}(id=${vehicle.id})}"
           th:object="${vehicle}" method="post" class="card shadow-sm mt-3">
         <div class="card-body p-4">
+            <div th:replace="~{fragments/csrf :: csrfInput}"></div>
             <div class="mb-3">
                 <label class="form-label" for="identifier">Identifier (e.g. plate / fleet id)</label>
                 <input class="form-control" id="identifier" th:field="*{identifier}" required>

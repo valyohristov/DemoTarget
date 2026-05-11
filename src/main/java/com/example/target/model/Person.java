@@ -18,6 +18,13 @@ public class Person {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(name = "password_hash")
+    private String passwordHash;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "location_id")
+    private Location location;
+
     public Person() {}
 
     public Person(String firstName, String lastName, String email) {
@@ -37,6 +44,12 @@ public class Person {
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+
+    public String getPasswordHash() { return passwordHash; }
+    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+
+    public Location getLocation() { return location; }
+    public void setLocation(Location location) { this.location = location; }
 
     public String getFullName() {
         return firstName + " " + lastName;

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
-<div th:fragment="nav (active)" class="d-flex justify-content-between mb-3 flex-wrap gap-2">
+<div th:fragment="nav (active)" class="d-flex justify-content-between mb-3 flex-wrap gap-2 align-items-center">
     <div class="d-flex flex-wrap gap-2">
         <a th:href="@{/assignments}" class="btn btn-outline-primary"
            th:classappend="${active == 'assignments'} ? 'active' : _">Route / person / vehicle</a>
@@ -13,6 +13,13 @@
            th:classappend="${active == 'locations'} ? 'active' : _">Locations</a>
         <a th:href="@{/vehicles}" class="btn btn-outline-primary"
            th:classappend="${active == 'vehicles'} ? 'active' : _">Vehicles</a>
+    </div>
+    <div sec:authorize="isAuthenticated()" class="d-flex align-items-center gap-2 flex-wrap">
+        <span class="text-muted small" sec:authentication="name">user</span>
+        <form th:action="@{/logout}" method="post" class="m-0">
+            <div th:replace="~{fragments/csrf :: csrfInput}"></div>
+            <button type="submit" class="btn btn-outline-secondary btn-sm">Log out</button>
+        </form>
     </div>
 </div>
 </body>

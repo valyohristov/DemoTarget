@@ -3,6 +3,7 @@ package com.example.target.controller;
 import com.example.target.model.AccessLevel;
 import com.example.target.model.ObjectType;
 import com.example.target.model.Person;
+import com.example.target.service.LocationService;
 import com.example.target.service.PersonService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Controller;
@@ -20,9 +21,11 @@ import java.util.Set;
 public class PersonController {
 
     private final PersonService personService;
+    private final LocationService locationService;
 
-    public PersonController(PersonService personService) {
+    public PersonController(PersonService personService, LocationService locationService) {
         this.personService = personService;
+        this.locationService = locationService;
     }
 
     @GetMapping
@@ -34,14 +37,18 @@ public class PersonController {
     @GetMapping("/add")
     public String showAddForm(Model model) {
         model.addAttribute("person", new Person());
+        model.addAttribute("locations", locationService.getAll());
         addAccessFormModel(model, null);
         model.addAttribute("mode", "add");
         return "persons/form";
     }
 
     @PostMapping("/add")
-    public String add(@ModelAttribute Person person, HttpServletRequest request) {
-        Person saved = personService.save(person);
+    public String add(@ModelAttribute Person person,
+                      @RequestParam("password") String password,
+                      @RequestParam(value = "locationId", required = false) String locationId,
+                      HttpServletRequest request) {
+        Person saved = personService.saveNew(person, password, parseLocationId(locationId));
         personService.replaceTypeAccess(saved.getId(), parseTypeAccess(request));
         return "redirect:/persons";
     }
@@ -53,15 +60,20 @@ public class PersonController {
             return "redirect:/persons";
         }
         model.addAttribute("person", person.get());
+        model.addAttribute("locations", locationService.getAll());
         addAccessFormModel(model, id);
         model.addAttribute("mode", "edit");
         return "persons/form";
     }
 
     @PostMapping("/edit/{id}")
-    public String update(@PathVariable Long id, @ModelAttribute Person person, HttpServletRequest request) {
+    public String update(@PathVariable Long id,
+                         @ModelAttribute Person person,
+                         @RequestParam(value = "newPassword", required = false) String newPassword,
+                         @RequestParam(value = "locationId", required = false) String locationId,
+                         HttpServletRequest request) {
         person.setId(id);
-        personService.save(person);
+        personService.updateExisting(person, newPassword, parseLocationId(locationId));
         personService.replaceTypeAccess(id, parseTypeAccess(request));
         return "redirect:/persons";
     }
@@ -77,12 +89,14 @@ public class PersonController {
         Map<ObjectType, Set<AccessLevel>> typeAccess = personService.typeAccessForForm(personId);
         model.addAttribute("routeTypeAccess", typeAccess.get(ObjectType.ROUTE));
         model.addAttribute("vehicleTypeAccess", typeAccess.get(ObjectType.VEHICLE));
+        model.addAttribute("locationTypeAccess", typeAccess.get(ObjectType.LOCATION));
     }
 
     private Map<ObjectType, Set<AccessLevel>> parseTypeAccess(HttpServletRequest request) {
         Map<ObjectType, Set<AccessLevel>> out = new EnumMap<>(ObjectType.class);
         out.put(ObjectType.ROUTE, parseLevelSet(request, "routeTypeAccess"));
         out.put(ObjectType.VEHICLE, parseLevelSet(request, "vehicleTypeAccess"));
+        out.put(ObjectType.LOCATION, parseLevelSet(request, "locationTypeAccess"));
         return out;
     }
 
@@ -98,5 +112,12 @@ public class PersonController {
             }
         }
         return set;
+    }
+
+    private static Long parseLocationId(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        return Long.parseLong(raw.trim());
     }
 }

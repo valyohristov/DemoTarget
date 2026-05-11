@@ -8,6 +8,7 @@ import com.example.target.repository.PersonRepository;
 import com.example.target.repository.RoutePersonVehicleRepository;
 import com.example.target.repository.RouteRepository;
 import com.example.target.repository.VehicleRepository;
+import com.example.target.security.RouteAccessPolicy;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,14 +38,25 @@ public class RoutePersonVehicleService {
         return routePersonVehicleRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
     }
 
+    public List<RoutePersonVehicle> getAllVisibleTo(Person viewer) {
+        if (viewer.getLocation() == null) {
+            return getAll();
+        }
+        return routePersonVehicleRepository.findByRoute_StartLocation_Id(
+                viewer.getLocation().getId(),
+                Sort.by(Sort.Direction.ASC, "id"));
+    }
+
     public Optional<RoutePersonVehicle> getById(Long id) {
         return routePersonVehicleRepository.findById(id);
     }
 
     @Transactional
-    public RoutePersonVehicle save(Long id, Long routeId, Long personId, Long vehicleId) {
+    public RoutePersonVehicle save(Long id, Long routeId, Long personId, Long vehicleId, Person actingUser) {
         Route route = routeRepository.findById(routeId)
                 .orElseThrow(() -> new IllegalArgumentException("Route not found: " + routeId));
+        RouteAccessPolicy.assertRouteAccessible(actingUser, route);
+
         Person person = personRepository.findById(personId)
                 .orElseThrow(() -> new IllegalArgumentException("Person not found: " + personId));
         Vehicle vehicle = vehicleRepository.findById(vehicleId)
@@ -54,6 +66,7 @@ public class RoutePersonVehicleService {
         if (id != null) {
             row = routePersonVehicleRepository.findById(id)
                     .orElseThrow(() -> new IllegalArgumentException("Row not found: " + id));
+            RouteAccessPolicy.assertRouteAccessible(actingUser, row.getRoute());
             row.setRoute(route);
             row.setPerson(person);
             row.setVehicle(vehicle);
@@ -63,7 +76,10 @@ public class RoutePersonVehicleService {
         return routePersonVehicleRepository.save(row);
     }
 
-    public void delete(Long id) {
+    public void delete(Long id, Person actingUser) {
+        RoutePersonVehicle row = routePersonVehicleRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Row not found: " + id));
+        RouteAccessPolicy.assertRouteAccessible(actingUser, row.getRoute());
         routePersonVehicleRepository.deleteById(id);
     }
 }
