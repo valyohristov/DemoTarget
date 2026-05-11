@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="nav (active)" class="d-flex justify-content-between mb-3 flex-wrap gap-2">
+    <div class="d-flex flex-wrap gap-2">
+        <a th:href="@{/assignments}" class="btn btn-outline-primary"
+           th:classappend="${active == 'assignments'} ? 'active' : _">Route / person / vehicle</a>
+        <a th:href="@{/persons}" class="btn btn-outline-primary"
+           th:classappend="${active == 'persons'} ? 'active' : _">Persons</a>
+        <a th:href="@{/routes}" class="btn btn-outline-primary"
+           th:classappend="${active == 'routes'} ? 'active' : _">Routes</a>
+        <a th:href="@{/vehicles}" class="btn btn-outline-primary"
+           th:classappend="${active == 'vehicles'} ? 'active' : _">Vehicles</a>
+    </div>
+</div>
+</body>
+</html>

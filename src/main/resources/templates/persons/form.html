@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${mode == 'add'} ? 'Add person' : 'Edit person'">Person</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="container mt-4 mb-5">
+    <h1 class="mb-4" th:text="${mode == 'add'} ? 'Add person' : 'Edit person'">Person</h1>
+    <div th:replace="~{fragments/nav :: nav ('persons')}"></div>
+
+    <form th:action="${mode == 'add'} ? @{/persons/add} : @{/persons/edit/{id}(id=${person.id})}"
+          th:object="${person}" method="post" class="card shadow-sm mt-3">
+        <div class="card-body p-4">
+            <h5 class="card-title">Profile</h5>
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label class="form-label" for="firstName">First name</label>
+                    <input class="form-control" id="firstName" th:field="*{firstName}" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="lastName">Last name</label>
+                    <input class="form-control" id="lastName" th:field="*{lastName}" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="email">Email</label>
+                    <input class="form-control" type="email" id="email" th:field="*{email}" required>
+                </div>
+            </div>
+
+            <hr>
+            <h5 class="mt-4">Route access</h5>
+            <p class="text-muted small">Per route, choose <strong>VIEW</strong>, <strong>READ</strong>, or <strong>WRITE</strong>. Use <em>No access</em> to clear.</p>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead class="table-light">
+                    <tr><th>Route</th><th style="width:220px;">Access</th></tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="r : ${routes}">
+                        <td th:text="${r.name}"></td>
+                        <td>
+                            <select class="form-select form-select-sm" th:name="${'routeAccess_' + r.id}">
+                                <option value="NONE" th:selected="${!routeAccess.containsKey(r.id)}">No access</option>
+                                <option th:each="lvl : ${accessLevels}" th:value="${lvl.name()}" th:text="${lvl}"
+                                        th:selected="${routeAccess.containsKey(r.id) and routeAccess.get(r.id) == lvl}"></option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(routes)}">
+                        <td colspan="2" class="text-muted">No routes defined — add some under Routes first.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h5 class="mt-4">Vehicle access</h5>
+            <p class="text-muted small">Same levels for each vehicle.</p>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead class="table-light">
+                    <tr><th>Vehicle</th><th style="width:220px;">Access</th></tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="v : ${vehicles}">
+                        <td th:text="${v.identifier}"></td>
+                        <td>
+                            <select class="form-select form-select-sm" th:name="${'vehicleAccess_' + v.id}">
+                                <option value="NONE" th:selected="${!vehicleAccess.containsKey(v.id)}">No access</option>
+                                <option th:each="lvl : ${accessLevels}" th:value="${lvl.name()}" th:text="${lvl}"
+                                        th:selected="${vehicleAccess.containsKey(v.id) and vehicleAccess.get(v.id) == lvl}"></option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(vehicles)}">
+                        <td colspan="2" class="text-muted">No vehicles defined.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-end mt-4">
+                <button type="submit" class="btn btn-success me-2">Save</button>
+                <a th:href="@{/persons}" class="btn btn-primary">Cancel</a>
+            </div>
+        </div>
+    </form>
+</div>
+</body>
+</html>
