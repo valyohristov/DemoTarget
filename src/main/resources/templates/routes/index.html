@@ -11,10 +11,11 @@
     <h1 class="mb-4 text-center">Routes</h1>
     <div th:replace="~{fragments/nav :: nav ('routes')}"></div>
     <div class="d-flex justify-content-end mb-3">
-        <a th:href="@{/routes/add}" class="btn btn-success">Add route</a>
+        <a th:if="${perm.routesWrite}" th:href="@{/routes/add}" class="btn btn-success">Add route</a>
     </div>
     <div class="card shadow-sm">
         <div class="card-body p-4">
+            <p th:if="${!perm.routesWrite}" class="text-muted small">You have read-only access to routes.</p>
             <table class="table table-striped table-bordered mb-0">
                 <thead class="table-light">
                 <tr>
@@ -22,7 +23,7 @@
                     <th>Name</th>
                     <th>Start location</th>
                     <th>Description</th>
-                    <th class="text-end pe-4" style="width:220px;">Actions</th>
+                    <th th:if="${perm.routesWrite}" class="text-end pe-4" style="width:220px;">Actions</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -31,14 +32,14 @@
                     <td th:text="${r.name}"></td>
                     <td th:text="${r.startLocation != null ? r.startLocation.name : '—'}"></td>
                     <td th:text="${r.description}"></td>
-                    <td class="actions d-flex justify-content-end gap-2 pe-4">
+                    <td th:if="${perm.routesWrite}" class="actions d-flex justify-content-end gap-2 pe-4">
                         <a th:href="@{/routes/edit/{id}(id=${r.id})}" class="btn btn-warning btn-sm">Edit</a>
                         <a th:href="@{/routes/delete/{id}(id=${r.id})}" class="btn btn-danger btn-sm"
                            onclick="return confirm('Delete this route?')">Delete</a>
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(routes)}">
-                    <td colspan="5" class="text-center text-muted">No routes yet.</td>
+                    <td th:colspan="${perm.routesWrite ? 5 : 4}" class="text-center text-muted">No routes yet.</td>
                 </tr>
                 </tbody>
             </table>

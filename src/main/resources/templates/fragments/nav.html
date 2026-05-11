@@ -3,15 +3,15 @@
 <body>
 <div th:fragment="nav (active)" class="d-flex justify-content-between mb-3 flex-wrap gap-2 align-items-center">
     <div class="d-flex flex-wrap gap-2">
-        <a th:href="@{/assignments}" class="btn btn-outline-primary"
+        <a th:if="${perm.assignmentsRead}" th:href="@{/assignments}" class="btn btn-outline-primary"
            th:classappend="${active == 'assignments'} ? 'active' : _">Route / person / vehicle</a>
-        <a th:href="@{/persons}" class="btn btn-outline-primary"
+        <a th:if="${perm.personsManage}" th:href="@{/persons}" class="btn btn-outline-primary"
            th:classappend="${active == 'persons'} ? 'active' : _">Persons</a>
-        <a th:href="@{/routes}" class="btn btn-outline-primary"
+        <a th:if="${perm.routesRead}" th:href="@{/routes}" class="btn btn-outline-primary"
            th:classappend="${active == 'routes'} ? 'active' : _">Routes</a>
-        <a th:href="@{/locations}" class="btn btn-outline-primary"
+        <a th:if="${perm.locationsRead}" th:href="@{/locations}" class="btn btn-outline-primary"
            th:classappend="${active == 'locations'} ? 'active' : _">Locations</a>
-        <a th:href="@{/vehicles}" class="btn btn-outline-primary"
+        <a th:if="${perm.vehiclesRead}" th:href="@{/vehicles}" class="btn btn-outline-primary"
            th:classappend="${active == 'vehicles'} ? 'active' : _">Vehicles</a>
     </div>
     <div sec:authorize="isAuthenticated()" class="d-flex align-items-center gap-2 flex-wrap">

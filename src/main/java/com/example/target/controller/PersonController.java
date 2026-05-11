@@ -3,7 +3,9 @@ package com.example.target.controller;
 import com.example.target.model.AccessLevel;
 import com.example.target.model.ObjectType;
 import com.example.target.model.Person;
+import com.example.target.security.CurrentPersonService;
 import com.example.target.service.LocationService;
+import com.example.target.service.PersonPermissionService;
 import com.example.target.service.PersonService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Controller;
@@ -22,20 +24,37 @@ public class PersonController {
 
     private final PersonService personService;
     private final LocationService locationService;
+    private final CurrentPersonService currentPersonService;
+    private final PersonPermissionService personPermissionService;
 
-    public PersonController(PersonService personService, LocationService locationService) {
+    public PersonController(PersonService personService,
+                            LocationService locationService,
+                            CurrentPersonService currentPersonService,
+                            PersonPermissionService personPermissionService) {
         this.personService = personService;
         this.locationService = locationService;
+        this.currentPersonService = currentPersonService;
+        this.personPermissionService = personPermissionService;
     }
 
     @GetMapping
     public String list(Model model) {
+        Person me = currentPersonService.requireCurrentPerson();
+        if (!personPermissionService.canManagePersons(me)) {
+            model.addAttribute("message", "Only administrators can manage persons.");
+            return "no-access";
+        }
         model.addAttribute("persons", personService.getAll());
         return "persons/index";
     }
 
     @GetMapping("/add")
     public String showAddForm(Model model) {
+        Person me = currentPersonService.requireCurrentPerson();
+        if (!personPermissionService.canManagePersons(me)) {
+            model.addAttribute("message", "Only administrators can manage persons.");
+            return "no-access";
+        }
         model.addAttribute("person", new Person());
         model.addAttribute("locations", locationService.getAll());
         addAccessFormModel(model, null);
@@ -44,10 +63,16 @@ public class PersonController {
     }
 
     @PostMapping("/add")
-    public String add(@ModelAttribute Person person,
+    public String add(Model model,
+                      @ModelAttribute Person person,
                       @RequestParam("password") String password,
                       @RequestParam(value = "locationId", required = false) String locationId,
                       HttpServletRequest request) {
+        Person me = currentPersonService.requireCurrentPerson();
+        if (!personPermissionService.canManagePersons(me)) {
+            model.addAttribute("message", "Only administrators can manage persons.");
+            return "no-access";
+        }
         Person saved = personService.saveNew(person, password, parseLocationId(locationId));
         personService.replaceTypeAccess(saved.getId(), parseTypeAccess(request));
         return "redirect:/persons";
@@ -55,6 +80,11 @@ public class PersonController {
 
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable Long id, Model model) {
+        Person me = currentPersonService.requireCurrentPerson();
+        if (!personPermissionService.canManagePersons(me)) {
+            model.addAttribute("message", "Only administrators can manage persons.");
+            return "no-access";
+        }
         Optional<Person> person = personService.getById(id);
         if (person.isEmpty()) {
             return "redirect:/persons";
@@ -67,11 +97,17 @@ public class PersonController {
     }
 
     @PostMapping("/edit/{id}")
-    public String update(@PathVariable Long id,
+    public String update(Model model,
+                         @PathVariable Long id,
                          @ModelAttribute Person person,
                          @RequestParam(value = "newPassword", required = false) String newPassword,
                          @RequestParam(value = "locationId", required = false) String locationId,
                          HttpServletRequest request) {
+        Person me = currentPersonService.requireCurrentPerson();
+        if (!personPermissionService.canManagePersons(me)) {
+            model.addAttribute("message", "Only administrators can manage persons.");
+            return "no-access";
+        }
         person.setId(id);
         personService.updateExisting(person, newPassword, parseLocationId(locationId));
         personService.replaceTypeAccess(id, parseTypeAccess(request));
@@ -79,7 +115,12 @@ public class PersonController {
     }
 
     @GetMapping("/delete/{id}")
-    public String delete(@PathVariable Long id) {
+    public String delete(@PathVariable Long id, Model model) {
+        Person me = currentPersonService.requireCurrentPerson();
+        if (!personPermissionService.canManagePersons(me)) {
+            model.addAttribute("message", "Only administrators can manage persons.");
+            return "no-access";
+        }
         personService.delete(id);
         return "redirect:/persons";
     }

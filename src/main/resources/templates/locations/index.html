@@ -11,17 +11,18 @@
     <h1 class="mb-4 text-center">Locations</h1>
     <div th:replace="~{fragments/nav :: nav ('locations')}"></div>
     <div class="d-flex justify-content-end mb-3">
-        <a th:href="@{/locations/add}" class="btn btn-success">Add location</a>
+        <a th:if="${perm.locationsWrite}" th:href="@{/locations/add}" class="btn btn-success">Add location</a>
     </div>
     <div class="card shadow-sm">
         <div class="card-body p-4">
+            <p th:if="${!perm.locationsWrite}" class="text-muted small">You have read-only access to locations.</p>
             <table class="table table-striped table-bordered mb-0">
                 <thead class="table-light">
                 <tr>
                     <th style="width:80px;">ID</th>
                     <th>Name</th>
                     <th>Description</th>
-                    <th class="text-end pe-4" style="width:220px;">Actions</th>
+                    <th th:if="${perm.locationsWrite}" class="text-end pe-4" style="width:220px;">Actions</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -29,14 +30,14 @@
                     <td th:text="${loc.id}"></td>
                     <td th:text="${loc.name}"></td>
                     <td th:text="${loc.description}"></td>
-                    <td class="actions d-flex justify-content-end gap-2 pe-4">
+                    <td th:if="${perm.locationsWrite}" class="actions d-flex justify-content-end gap-2 pe-4">
                         <a th:href="@{/locations/edit/{id}(id=${loc.id})}" class="btn btn-warning btn-sm">Edit</a>
                         <a th:href="@{/locations/delete/{id}(id=${loc.id})}" class="btn btn-danger btn-sm"
                            onclick="return confirm('Delete this location? Routes using it will clear start location.')">Delete</a>
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(locations)}">
-                    <td colspan="4" class="text-center text-muted">No locations yet.</td>
+                    <td th:colspan="${perm.locationsWrite ? 4 : 3}" class="text-center text-muted">No locations yet.</td>
                 </tr>
                 </tbody>
             </table>
